@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beer & Wine Pricing Tool</title>
+    <style>
+        /* Highlight input field */
+        #lcboPrice {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <h5>Beer & Wine Pricing Tool</h5><p></p>
+    <h6>* The price of LCBO Website changes sometimes, please maintain the price whenever you purchase them.</h6><p></p>
+    
+    <label for="lcboPrice">LCBO Order site Price ($):</label>
+    <input type="number" id="lcboPrice" step="0.01" autofocus><br>
+
+    <label for="bottlesInBox">Bottles in a Box:</label>
+    <select id="bottlesInBox">
+        <option value="30">30</option>
+        <option value="24" selected>24</option>
+        <option value="15">15</option>
+        <option value="12">12</option>
+        <option value="6">6</option>
+    </select><br>
+
+    <label for="productType">Product Type:</label>
+    <select id="productType" onchange="updateBottlesInBox()">
+        <option value="beer" selected>Beer</option>
+        <option value="wine">Wine</option>
+    </select><br>
+
+    <label for="marginRateBulk">Margin Rate (Bulk - Box sizes)(%):</label>
+    <input type="number" id="marginRateBulk" value="15" step="0.1"><br>
+
+    <label for="marginRateIndividual">Margin Rate (Individual)(%):</label>
+    <input type="number" id="marginRateIndividual" value="20" step="0.1"><br>
+<br>
+    <button id="calculateButton" onclick="calculatePrices()">Calculate</button> 
+    <br>
+<br>
+    <h5>Results:</h5>
+    <div id="netCostDisplay"></div>
+    <table border="1" id="resultTable">
+        <thead>
+            <tr>
+                <th>Selling Unit</th>
+                <th>Retail Price (Before Tax)</th>
+                <th>Retail Price (After Tax)</th>
+                <th>Retail Price (After Tax + Deposit)</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<script>
+document.getElementById("lcboPrice").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        calculatePrices();
+    }
+});
+
+function updateBottlesInBox() {
+    const productType = document.getElementById('productType').value;
+    if (productType === 'wine') {
+        document.getElementById('bottlesInBox').value = 12;
+    } else if (productType === 'beer') {
+        document.getElementById('bottlesInBox').value = 24;
+    }
+}
+
+function calculatePrices() {
+    const lcboPrice = parseFloat(document.getElementById('lcboPrice').value);
+    const bottlesInBox = parseInt(document.getElementById('bottlesInBox').value);
+    const productType = document.getElementById('productType').value;
+    const depositRate = productType === 'beer' ? 0.10 : 0.20;
+
+    const deposit = bottlesInBox * depositRate;
+    const netCost = (lcboPrice - deposit) / 1.13;
+
+    document.getElementById('netCostDisplay').innerText = `Net Cost of Box: $${netCost.toFixed(2)}`;
+
+    const sellingUnits = [];
+    if (productType === 'wine') {
+        sellingUnits.push({ label: 'Box(12)', bottles: 12 });
+        sellingUnits.push({ label: 'Individual(1)', bottles: 1 });
+    } else if (bottlesInBox === 30) {
+        sellingUnits.push({ label: 'Box(30)', bottles: 30 });
+        sellingUnits.push({ label: 'Box(15)', bottles: 15 });
+        sellingUnits.push({ label: 'Individual(1)', bottles: 1 });
+    } else if (bottlesInBox === 24) {
+        sellingUnits.push({ label: 'Box(24)', bottles: 24 });
+        sellingUnits.push({ label: 'Box(12)', bottles: 12 });
+        sellingUnits.push({ label: 'Box(8)', bottles: 8 });
+        sellingUnits.push({ label: 'Box(6)', bottles: 6 });
+        sellingUnits.push({ label: 'Individual(1)', bottles: 1 });
+    } else if (bottlesInBox === 15) {
+        sellingUnits.push({ label: 'Box(15)', bottles: 15 });
+        sellingUnits.push({ label: 'Individual(1)', bottles: 1 });
+    }
+      else if (bottlesInBox === 12) {
+        sellingUnits.push({ label: 'Box(12)', bottles: 12 });
+        sellingUnits.push({ label: 'Box(6)', bottles: 6 });
+        sellingUnits.push({ label: 'Individual(1)', bottles: 1 });
+    } else if (bottlesInBox === 6) {
+        sellingUnits.push({ label: 'Box(6)', bottles: 6 });
+        sellingUnits.push({ label: 'Individual(1)', bottles: 1 });
+    }
+
+    const resultTable = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+    resultTable.innerHTML = '';
+
+    sellingUnits.forEach(unit => {
+        const retailPriceBeforeTax = netCost / (bottlesInBox / unit.bottles);
+        const marginRate = unit.bottles === 1 ? parseFloat(document.getElementById('marginRateIndividual').value) / 100 : parseFloat(document.getElementById('marginRateBulk').value) / 100;
+        const retailPrice = retailPriceBeforeTax / (1 - marginRate);
+        const retailPriceAfterTax = retailPrice * 1.13; 
+        const retailPriceAfterTaxDeposit = retailPriceAfterTax + (unit.bottles * depositRate);
+
+        const newRow = resultTable.insertRow();
+        newRow.innerHTML = `<td>${unit.label}</td><td>$${retailPrice.toFixed(2)}</td><td>$${retailPriceAfterTax.toFixed(2)}</td><td>$${retailPriceAfterTaxDeposit.toFixed(2)}</td>`;
+    });
+}
+</script>
+<h6>* This tool is to help business owners calculate the Retail Price of the Beer & Wine with ease. <br>Please use as the assistant tool for your convenience. </h6><p></p>
+    
+</body>
+</html>
